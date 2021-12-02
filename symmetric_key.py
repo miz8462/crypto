@@ -19,10 +19,13 @@ def encrypt(key, data):
     cipher = AES.new(key, AES.MODE_EAX)
     ciphertext, tag = cipher.encrypt_and_digest(data)
     # MAC tag
-    nonce = cipher.nonce
-    return ciphertext, tag, nonce
+    file_out = open("encrypted.bin", "wb")
+    [ file_out.write(x) for x in (cipher.nonce, tag, ciphertext) ]
+    file_out.close()
 
-def decrypt(key, ciphertext, tag, nonce):
+def decrypt(key, encrypted_data):
+    nonce, tag, ciphertext = [ encrypted_data.read(x) for x in (16, 16, -1) ]
+    encrypted_data.close()
     cipher_dec = AES.new(key, AES.MODE_EAX, nonce)
     data = cipher_dec.decrypt_and_verify(ciphertext, tag)
 
@@ -35,8 +38,11 @@ def decrypt(key, ciphertext, tag, nonce):
 if __name__ == '__main__':
     key = generate_key()
     data = "人生の勝負所は待ったなしだ"
-    encrypted_data, tag, nonce = encrypt(key, data)
-    decrypted_data = decrypt(key, encrypted_data, tag, nonce)
-    print(data)
-    print(encrypted_data)
-    print(decrypted_data)
+    encrypt(key, data)
+    encrypted_file = "encrypted.bin"
+    encrypted_data = open(encrypted_file, "rb")
+    encrypted_data_bin = open(encrypted_file, "rb")
+    decrypted_data = decrypt(key, encrypted_data)
+    print('暗号前：', data)
+    print('暗号後：', encrypted_data_bin.read())
+    print('復号後：', decrypted_data)
